@@ -1,0 +1,115 @@
+import time
+import RPi.GPIO as GPIO
+from flask import Flask, render_template
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+GPIO.setmode(GPIO.BCM)
+# Hier können die jeweiligen Eingangs-/Ausgangspins ausgewählt werden
+Water_Trigger_AusgangsPin = 17
+Water_Echo_EingangsPin = 27
+Coffee_Trigger_AusgangsPin = 14
+Coffee_Echo_EingangsPin = 15
+GPIO.setup(22, GPIO.OUT)
+GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+# Pause zwischen den einzelnen Messugnen in Sekunden
+sleeptime = 2
+GPIO.setup(Water_Trigger_AusgangsPin, GPIO.OUT)
+GPIO.setup(Water_Echo_EingangsPin, GPIO.IN)
+GPIO.output(Water_Trigger_AusgangsPin, False)
+GPIO.setup(Coffee_Trigger_AusgangsPin, GPIO.OUT)
+GPIO.setup(Coffee_Echo_EingangsPin, GPIO.IN)
+GPIO.output(Coffee_Trigger_AusgangsPin, False)
+
+#Variablen definieren (Merker)
+pass_pot= False
+pass_water= False
+pass_coffee= False
+
+# Vorhandensein der Kaffeekanne
+
+
+def kanne():
+    global pass_pot
+    if GPIO.input(24) == GPIO.HIGH:
+        # Merker für Kanne setzen
+        pass_pot= True
+    else:
+        print("Kanne fehlt")
+        pass_pot= False
+
+
+# Ultraschallsensor Wasser
+
+
+def wasser():
+    global pass_water
+# Abstandsmessung mittels des 10us langen Triggersignals
+    GPIO.output(Water_Trigger_AusgangsPin, True)
+    time.sleep(0.00001)
+    GPIO.output(Water_Trigger_AusgangsPin, False)
+        # Hier wird die Stopuhr gestartet
+    EinschaltZeit = time.time()
+    while GPIO.input(Water_Echo_EingangsPin) == 0:
+        EinschaltZeit = time.time()
+    while GPIO.input(Water_Echo_EingangsPin) == 1:
+        AusschaltZeit = time.time()
+        # Die Differenz der beiden Zeiten ergibt die gesuchte Dauer
+    Dauer = AusschaltZeit - EinschaltZeit
+        # Berechne Abstand auf Basis der Schallgeschwindigkeit
+    Abstand = (Dauer * 34300) / 2
+        # Überprüfung, ob gemessener Wert innerhalb der zulässigen Entfernung
+    if Abstand < 2 or (round(Abstand) > 300):
+            # Falls nicht wird eine Fehlermeldung ausgegeben
+        print("Wassertank leer")
+        pass_water= False
+    else:
+        # Merker setzen dass Wasser vorhanden
+        pass_water= True
+
+
+# Ultraschallsensor Kaffee
+
+def Pulver():
+    global pass_coffee
+# Abstandsmessung mittels des 10us langen Triggersignals
+    GPIO.output(Coffee_Trigger_AusgangsPin, True)
+    time.sleep(0.00001)
+    GPIO.output(Coffee_Trigger_AusgangsPin, False)
+# Hier wird die Stopuhr gestartet
+    EinschaltZeit = time.time()
+    while GPIO.input(Coffee_Echo_EingangsPin) == 0:
+        EinschaltZeit = time.time()
+    while GPIO.input(Coffee_Echo_EingangsPin) == 1:
+        AusschaltZeit = time.time()
+# Die Differenz der beiden Zeiten ergibt die gesuchte Dauer
+    Dauer = AusschaltZeit - EinschaltZeit
+# Berechne Abstand auf Basis der Schallgeschwindigkeit
+    Abstand = (Dauer * 34300) / 2
+# Überprüfung, ob gemessener Wert innerhalb der zulässigen Entfernung
+    if Abstand < 2 or (round(Abstand) > 300):
+    # Falls nicht wird eine Fehlermeldung ausgegeben
+        print("Kaffeepulver leer")
+        pass_coffee = False
+    else:
+    # Merker setzen dass Kaffeepulver vorhanden
+        pass_coffee = True
+
+
+value = True
+while(value):
+    kanne()
+    wasser()
+    Pulver()
+    if ((pass_coffee==True) and (pass_water==True) and (pass_pot==True)):
+        GPIO.output(22, GPIO.HIGH)
+        print ("Kaffee wird zubereitet")
+    else:
+        GPIO.output(22, GPIO.LOW)
+        print ("keine Freigabe")
