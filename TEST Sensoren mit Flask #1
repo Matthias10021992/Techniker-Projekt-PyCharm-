@@ -107,7 +107,7 @@ import time
      value = value + 1
      value
      
-@app.route("/Kaffee")
+@app.route("/")
  def Kaffee():
      if ((pass_coffee==True) and (pass_water==True) and (pass_pot==True)):
          GPIO.output(22, GPIO.HIGH)
