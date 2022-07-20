@@ -1,0 +1,42 @@
+
+from flask import Flask, render_template
+
+app = Flask(__name__)
+
+@app.route("/button")
+def button():
+
+
+GPIO.setmode(GPIO.BCM)
+ # Hier können die jeweiligen Eingangs-/Ausgangspins ausgewählt werden
+ Water_Trigger_AusgangsPin = 17
+ Water_Echo_EingangsPin = 27
+ Coffee_Trigger_AusgangsPin = 14
+ Coffee_Echo_EingangsPin = 15
+ GPIO.setup(22, GPIO.OUT)
+ GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+ # Pause zwischen den einzelnen Messugnen in Sekunden
+ sleeptime = 2
+ GPIO.setup(Water_Trigger_AusgangsPin, GPIO.OUT)
+ GPIO.setup(Water_Echo_EingangsPin, GPIO.IN)
+ GPIO.output(Water_Trigger_AusgangsPin, False)
+ GPIO.setup(Coffee_Trigger_AusgangsPin, GPIO.OUT)
+ GPIO.setup(Coffee_Echo_EingangsPin, GPIO.IN)
+ GPIO.output(Coffee_Trigger_AusgangsPin, False)
+
+ #Variablen definieren (Merker)
+ pass_pot= False
+ pass_water= False
+ pass_coffee= False
+
+ # Vorhandensein der Kaffeekanne
+
+
+ def kanne():
+     global pass_pot
+     if GPIO.input(24) == GPIO.HIGH:
+         # Merker für Kanne setzen
+         pass_pot= True
+     else:
+         return "<p>Kanne fehlt </p>"
+         pass_pot= False
